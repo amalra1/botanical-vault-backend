@@ -7,7 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.botanicalvault.backend.config.SecurityConfig;
 import com.botanicalvault.backend.dto.response.HealthResponseDTO;
+import com.botanicalvault.backend.repository.UserRepository;
+import com.botanicalvault.backend.service.AuthUserDetailsService;
 import com.botanicalvault.backend.service.HealthService;
+import com.botanicalvault.backend.service.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -16,7 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(HealthController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, AuthUserDetailsService.class})
 class HealthControllerTest {
 
     @Autowired
@@ -24,6 +27,12 @@ class HealthControllerTest {
 
     @MockitoBean
     private HealthService healthService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     @Test
     void healthIsPublicAndReportsUp() throws Exception {
