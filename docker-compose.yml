@@ -1,0 +1,53 @@
+networks:
+  botanical-vault-network:
+    driver: bridge
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: botanical-vault-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-botanical_vault}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT_EXTERNAL:-5432}:5432"
+    networks:
+      - botanical-vault-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    volumes:
+      - botanical-vault-db-data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: botanical-vault-app
+    profiles: ["app"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-botanical_vault}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-604800000}
+      APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      STORAGE_PROVIDER: local
+      STORAGE_LOCAL_DIRECTORY: /app/storage
+    volumes:
+      - ./storage:/app/storage
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    networks:
+      - botanical-vault-network
+    restart: unless-stopped
+
+volumes:
+  botanical-vault-db-data:
