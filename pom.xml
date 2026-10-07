@@ -12,7 +12,7 @@
 	<artifactId>botanical-vault-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>botanical-vault-backend</name>
-	<description>Acervo de Plantas API</description>
+	<description>Cofre de Plantas API</description>
 	<properties>
 		<java.version>21</java.version>
 		<jjwt.version>0.12.6</jjwt.version>
