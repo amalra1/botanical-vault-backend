@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 
 import com.botanicalvault.backend.dto.request.CollectionNameRequestDTO;
+import com.botanicalvault.backend.dto.response.CollectionImageResponseDTO;
 import com.botanicalvault.backend.dto.response.CollectionResponseDTO;
 import com.botanicalvault.backend.dto.response.CollectionSummaryResponseDTO;
 import com.botanicalvault.backend.service.CollectionService;
@@ -49,6 +50,14 @@ public class CollectionController {
         log.info("GET /collections/{}", id);
         CollectionResponseDTO response = collectionService.findById(id);
         log.info("GET /collections/{} - Success", id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/images")
+    public ResponseEntity<List<CollectionImageResponseDTO>> findImages(@PathVariable Long id) {
+        log.info("GET /collections/{}/images", id);
+        List<CollectionImageResponseDTO> response = collectionService.findImages(id);
+        log.info("GET /collections/{}/images - Success - count: {}", id, response.size());
         return ResponseEntity.ok(response);
     }
 

@@ -1,6 +1,7 @@
 package com.botanicalvault.backend.integration;
 
 import static com.botanicalvault.backend.integration.AuthTestSupport.bearerToken;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -72,6 +73,24 @@ class CollectionIntegrationTest {
 
         perform(delete("/plants/" + tall)).andExpect(status().isNoContent());
         perform(get("/collections/" + collectionId)).andExpect(jsonPath("$.plants.length()").value(1));
+    }
+
+    @Test
+    void listsSignedImagesInStaircaseOrder() throws Exception {
+        Integer collectionId = createCollection("Coleção para zip");
+        Integer tall = createPlant(TALL);
+        Integer shortPlant = createPlant(SHORT);
+        perform(put(memberPath(collectionId, tall))).andExpect(status().isNoContent());
+        perform(put(memberPath(collectionId, shortPlant))).andExpect(status().isNoContent());
+
+        perform(get("/collections/" + collectionId + "/images"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].plantId").value(shortPlant))
+                .andExpect(jsonPath("$[0].originalFilename").value("planta.png"))
+                .andExpect(jsonPath("$[1].commonName").value("Jerivá-coleção"))
+                .andExpect(jsonPath("$[1].url").value(containsString("signature=")));
+        perform(get("/collections/0/images")).andExpect(status().isNotFound());
     }
 
     @Test

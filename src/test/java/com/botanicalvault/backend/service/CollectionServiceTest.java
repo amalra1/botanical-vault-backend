@@ -18,6 +18,7 @@ import java.util.Optional;
 import com.botanicalvault.backend.TestPlants;
 import com.botanicalvault.backend.constants.ErrorCode;
 import com.botanicalvault.backend.dto.request.CollectionNameRequestDTO;
+import com.botanicalvault.backend.dto.response.CollectionImageResponseDTO;
 import com.botanicalvault.backend.dto.response.CollectionResponseDTO;
 import com.botanicalvault.backend.entity.PlantCollection;
 import com.botanicalvault.backend.exception.BusinessException;
@@ -97,10 +98,25 @@ class CollectionServiceTest {
     }
 
     @Test
+    void listsImagesInStaircaseAndPositionOrder() {
+        batel.addPlant(TestPlants.plant(5L, "Jerivá", TestPlants.PALM, TestPlants.LARGE, List.of(),
+                List.of(TestPlants.ELEVATION, TestPlants.TOP)));
+        batel.addPlant(TestPlants.plant(6L, "Grama", TestPlants.SHRUB, TestPlants.SMALL, List.of(),
+                List.of(TestPlants.ELEVATION)));
+
+        List<CollectionImageResponseDTO> images = collectionService.findImages(BATEL_ID);
+
+        assertThat(images).extracting(CollectionImageResponseDTO::imageId).containsExactly(600L, 500L, 501L);
+        assertThat(images.getFirst().commonName()).isEqualTo("Grama");
+        assertThat(images.getLast().url()).isEqualTo("url:Jerivá1.png");
+    }
+
+    @Test
     void unknownCollectionIsNotFound() {
         when(collectionRepository.findDetailedById(99L)).thenReturn(Optional.empty());
 
         assertError(() -> collectionService.findById(99L), ErrorCode.RESOURCE_NOT_FOUND);
+        assertError(() -> collectionService.findImages(99L), ErrorCode.RESOURCE_NOT_FOUND);
     }
 
     private static void assertError(Runnable action, ErrorCode expected) {

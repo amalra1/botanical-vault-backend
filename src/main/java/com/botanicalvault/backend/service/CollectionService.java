@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.botanicalvault.backend.constants.ErrorCode;
 import com.botanicalvault.backend.dto.request.CollectionNameRequestDTO;
+import com.botanicalvault.backend.dto.response.CollectionImageResponseDTO;
 import com.botanicalvault.backend.dto.response.CollectionResponseDTO;
 import com.botanicalvault.backend.dto.response.CollectionSummaryResponseDTO;
 import com.botanicalvault.backend.entity.PlantCollection;
@@ -41,6 +42,11 @@ public class CollectionService {
     @Transactional(readOnly = true)
     public CollectionResponseDTO findById(Long id) {
         return toResponse(findCollection(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CollectionImageResponseDTO> findImages(Long id) {
+        return CollectionMapper.toImages(findCollection(id), imageStorage::readUrl);
     }
 
     @Transactional
