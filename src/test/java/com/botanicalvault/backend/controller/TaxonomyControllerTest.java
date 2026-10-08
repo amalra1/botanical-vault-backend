@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.botanicalvault.backend.config.SecurityConfig;
-import com.botanicalvault.backend.dto.response.SizeResponseDTO;
-import com.botanicalvault.backend.dto.response.TaxonomyItemResponseDTO;
+import com.botanicalvault.backend.dto.response.SizeListItemResponseDTO;
+import com.botanicalvault.backend.dto.response.TaxonomyListItemResponseDTO;
 import com.botanicalvault.backend.entity.User;
 import com.botanicalvault.backend.repository.UserRepository;
 import com.botanicalvault.backend.service.AuthUserDetailsService;
@@ -60,11 +60,11 @@ class TaxonomyControllerTest {
 
     @BeforeEach
     void setUp() {
-        List<TaxonomyItemResponseDTO> items = List.of(new TaxonomyItemResponseDTO(1L, ITEM_NAME));
+        List<TaxonomyListItemResponseDTO> items = List.of(new TaxonomyListItemResponseDTO(1L, ITEM_NAME, 2));
         when(originService.findAll()).thenReturn(items);
         when(plantTypeService.findAll()).thenReturn(items);
         when(imageViewService.findAll()).thenReturn(items);
-        when(sizeService.findAll()).thenReturn(List.of(new SizeResponseDTO(1L, ITEM_NAME, "P · baixa")));
+        when(sizeService.findAll()).thenReturn(List.of(new SizeListItemResponseDTO(1L, ITEM_NAME, "P · baixa", 2)));
         when(jwtService.readSubject(TOKEN)).thenReturn(Optional.of(EMAIL));
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(User.builder().email(EMAIL).build()));
     }
@@ -89,7 +89,8 @@ class TaxonomyControllerTest {
         mockMvc.perform(get(route).header(HttpHeaders.AUTHORIZATION, "Bearer " + TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].name").value(ITEM_NAME));
+                .andExpect(jsonPath("$[0].name").value(ITEM_NAME))
+                .andExpect(jsonPath("$[0].usageCount").value(2));
     }
 
     @Test

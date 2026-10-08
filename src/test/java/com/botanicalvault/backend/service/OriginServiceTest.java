@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.botanicalvault.backend.constants.ErrorCode;
-import com.botanicalvault.backend.dto.request.OriginCreateRequestDTO;
+import com.botanicalvault.backend.dto.request.TaxonomyNameRequestDTO;
 import com.botanicalvault.backend.dto.response.TaxonomyItemResponseDTO;
 import com.botanicalvault.backend.entity.Origin;
 import com.botanicalvault.backend.exception.BusinessException;
@@ -19,7 +19,7 @@ import org.mockito.ArgumentCaptor;
 
 class OriginServiceTest {
     private final OriginRepository originRepository = mock(OriginRepository.class);
-    private final OriginService originService = new OriginService(originRepository);
+    private final OriginService originService = new OriginService(originRepository, new TaxonomyCatalog());
 
     @Test
     void createsTrimmedOriginAtTheEnd() {
@@ -30,7 +30,7 @@ class OriginServiceTest {
             return origin;
         });
 
-        TaxonomyItemResponseDTO response = originService.create(new OriginCreateRequestDTO("  Exótica "));
+        TaxonomyItemResponseDTO response = originService.create(new TaxonomyNameRequestDTO("  Exótica "));
 
         ArgumentCaptor<Origin> saved = ArgumentCaptor.forClass(Origin.class);
         verify(originRepository).save(saved.capture());
@@ -42,7 +42,7 @@ class OriginServiceTest {
     void rejectsDuplicateNameIgnoringCase() {
         when(originRepository.existsByNameIgnoreCase("mata atlântica")).thenReturn(true);
 
-        assertThatThrownBy(() -> originService.create(new OriginCreateRequestDTO("mata atlântica")))
+        assertThatThrownBy(() -> originService.create(new TaxonomyNameRequestDTO("mata atlântica")))
                 .isInstanceOf(BusinessException.class)
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.DUPLICATE_NAME);
