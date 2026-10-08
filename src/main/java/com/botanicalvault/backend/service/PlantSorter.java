@@ -30,7 +30,7 @@ public final class PlantSorter {
         return Comparator.comparing(Plant::getCreatedAt, Comparator.nullsLast(Comparator.<Instant>reverseOrder()));
     }
 
-    private static Comparator<Plant> byName() {
+    static Comparator<Plant> byName() {
         Collator collator = Collator.getInstance(PORTUGUESE);
         collator.setStrength(Collator.SECONDARY);
         return Comparator.comparing(Plant::getCommonName, collator).thenComparing(Plant::getId);

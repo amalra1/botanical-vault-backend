@@ -10,5 +10,6 @@ public record PlantSummaryResponseDTO(
     SizeResponseDTO size,
     List<TaxonomyItemResponseDTO> origins,
     int imageCount,
-    String coverUrl
+    String coverUrl,
+    boolean favorite
 ) {}

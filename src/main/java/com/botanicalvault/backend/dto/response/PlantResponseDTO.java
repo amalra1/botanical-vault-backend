@@ -13,5 +13,7 @@ public record PlantResponseDTO(
     String notes,
     List<PlantImageResponseDTO> images,
     Instant createdAt,
-    Instant updatedAt
+    Instant updatedAt,
+    boolean favorite,
+    List<Long> collectionIds
 ) {}

@@ -1,6 +1,8 @@
 package com.botanicalvault.backend.service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.botanicalvault.backend.dto.request.PlantCreateRequestDTO;
 import com.botanicalvault.backend.dto.request.PlantImageRequestDTO;
@@ -14,6 +16,7 @@ import com.botanicalvault.backend.entity.Plant;
 import com.botanicalvault.backend.entity.PlantImage;
 import com.botanicalvault.backend.exception.ResourceNotFoundException;
 import com.botanicalvault.backend.mapper.PlantMapper;
+import com.botanicalvault.backend.repository.PlantCollectionRepository;
 import com.botanicalvault.backend.repository.PlantRepository;
 import com.botanicalvault.backend.storage.ImageStorage;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +32,14 @@ public class PlantService {
     private final PlantImageSync imageSync;
     private final ImageStorage imageStorage;
     private final StoredImageCleanup storedImageCleanup;
+    private final PlantCollectionRepository collectionRepository;
 
     @Transactional
     public PlantResponseDTO create(PlantCreateRequestDTO dto, List<MultipartFile> files) {
         Plant plant = Plant.builder().build();
         plantFields.apply(plant, dto);
         imageSync.apply(plant, newImages(dto.images()), files);
-        return PlantMapper.toResponse(plantRepository.save(plant), imageStorage::readUrl);
+        return PlantMapper.toResponse(plantRepository.save(plant), imageStorage::readUrl, false, List.of());
     }
 
     @Transactional
@@ -44,7 +48,7 @@ public class PlantService {
         plantFields.apply(plant, dto);
         List<String> removedKeys = imageSync.apply(plant, dto.images(), files);
         storedImageCleanup.deleteAfterCommit(removedKeys);
-        return PlantMapper.toResponse(plantRepository.saveAndFlush(plant), imageStorage::readUrl);
+        return toResponse(plantRepository.saveAndFlush(plant));
     }
 
     @Transactional
@@ -57,7 +61,7 @@ public class PlantService {
 
     @Transactional(readOnly = true)
     public PlantResponseDTO findById(Long id) {
-        return PlantMapper.toResponse(findPlant(id), imageStorage::readUrl);
+        return toResponse(findPlant(id));
     }
 
     @Transactional(readOnly = true)
@@ -65,10 +69,17 @@ public class PlantService {
         PlantSearchCriteria criteria = PlantSearchCriteria.from(dto);
         List<Plant> plants = plantRepository.findAllDetailed();
         List<Plant> matching = plants.stream().filter(criteria::matches).toList();
+        Set<Long> favoriteIds = new HashSet<>(collectionRepository.findFavoritePlantIds());
         List<PlantSummaryResponseDTO> summaries = PlantSorter.sort(matching, dto.sort()).stream()
-                .map(plant -> PlantMapper.toSummary(plant, imageStorage::readUrl))
+                .map(plant -> PlantMapper.toSummary(plant, imageStorage::readUrl, favoriteIds.contains(plant.getId())))
                 .toList();
         return new PlantSearchResponseDTO(summaries, PlantFacetCounter.count(plants, criteria));
+    }
+
+    private PlantResponseDTO toResponse(Plant plant) {
+        boolean favorite = collectionRepository.isFavoritePlant(plant.getId());
+        List<Long> collectionIds = collectionRepository.findIdsContainingPlant(plant.getId());
+        return PlantMapper.toResponse(plant, imageStorage::readUrl, favorite, collectionIds);
     }
 
     private Plant findPlant(Long id) {

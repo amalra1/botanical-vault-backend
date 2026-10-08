@@ -54,7 +54,7 @@ class PlantUpdateControllerTest {
     private static final PlantResponseDTO UPDATED = new PlantResponseDTO(
             7L, "Butiá", null, new TaxonomyItemResponseDTO(4L, "Palmeira"),
             new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), null, List.of(),
-            Instant.parse("2026-10-07T12:00:00Z"), Instant.parse("2026-10-07T13:00:00Z"));
+            Instant.parse("2026-10-07T12:00:00Z"), Instant.parse("2026-10-07T13:00:00Z"), false, List.of());
 
     @Autowired
     private MockMvc mockMvc;

@@ -13,7 +13,8 @@ import com.botanicalvault.backend.entity.Plant;
 import com.botanicalvault.backend.entity.PlantImage;
 
 public class PlantMapper {
-    public static PlantResponseDTO toResponse(Plant plant, UnaryOperator<String> urlForKey) {
+    public static PlantResponseDTO toResponse(Plant plant, UnaryOperator<String> urlForKey, boolean favorite,
+            List<Long> collectionIds) {
         return new PlantResponseDTO(
                 plant.getId(),
                 plant.getCommonName(),
@@ -24,10 +25,12 @@ public class PlantMapper {
                 plant.getNotes(),
                 imagesOf(plant, urlForKey),
                 plant.getCreatedAt(),
-                plant.getUpdatedAt());
+                plant.getUpdatedAt(),
+                favorite,
+                collectionIds);
     }
 
-    public static PlantSummaryResponseDTO toSummary(Plant plant, UnaryOperator<String> urlForKey) {
+    public static PlantSummaryResponseDTO toSummary(Plant plant, UnaryOperator<String> urlForKey, boolean favorite) {
         return new PlantSummaryResponseDTO(
                 plant.getId(),
                 plant.getCommonName(),
@@ -36,10 +39,11 @@ public class PlantMapper {
                 TaxonomyMapper.toSizeResponse(plant.getSize()),
                 originsOf(plant),
                 plant.getImages().size(),
-                coverUrlOf(plant, urlForKey));
+                coverUrlOf(plant, urlForKey),
+                favorite);
     }
 
-    private static String coverUrlOf(Plant plant, UnaryOperator<String> urlForKey) {
+    public static String coverUrlOf(Plant plant, UnaryOperator<String> urlForKey) {
         return plant.getImages().stream()
                 .min(Comparator.comparing(PlantImage::getPosition))
                 .map(image -> urlForKey.apply(image.getStorageKey()))

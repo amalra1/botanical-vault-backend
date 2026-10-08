@@ -25,6 +25,7 @@ import com.botanicalvault.backend.entity.PlantType;
 import com.botanicalvault.backend.entity.Size;
 import com.botanicalvault.backend.exception.BusinessException;
 import com.botanicalvault.backend.exception.ResourceNotFoundException;
+import com.botanicalvault.backend.repository.PlantCollectionRepository;
 import com.botanicalvault.backend.repository.PlantRepository;
 import com.botanicalvault.backend.storage.ImageStorage;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,8 +41,10 @@ class PlantServiceTest {
     private final PlantReferenceResolver references = mock(PlantReferenceResolver.class);
     private final ImageStorage imageStorage = mock(ImageStorage.class);
     private final StoredImageCleanup cleanup = new StoredImageCleanup(imageStorage);
+    private final PlantCollectionRepository collectionRepository = mock(PlantCollectionRepository.class);
     private final PlantService plantService = new PlantService(plantRepository, new PlantFields(references),
-            new PlantImageSync(references, new PlantImageUploads(), imageStorage, cleanup), imageStorage, cleanup);
+            new PlantImageSync(references, new PlantImageUploads(), imageStorage, cleanup), imageStorage, cleanup,
+            collectionRepository);
 
     @BeforeEach
     void setUp() {

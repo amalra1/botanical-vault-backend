@@ -56,11 +56,11 @@ class PlantControllerTest {
     private static final PlantResponseDTO CREATED = new PlantResponseDTO(
             7L, "Butiá", null, new TaxonomyItemResponseDTO(4L, "Palmeira"),
             new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), null, List.of(),
-            Instant.parse("2026-10-07T12:00:00Z"), Instant.parse("2026-10-07T12:00:00Z"));
+            Instant.parse("2026-10-07T12:00:00Z"), Instant.parse("2026-10-07T12:00:00Z"), false, List.of());
     private static final FacetResponseDTO EMPTY_FACET = new FacetResponseDTO(1, List.of());
     private static final PlantSearchResponseDTO SEARCH_RESULT = new PlantSearchResponseDTO(
             List.of(new PlantSummaryResponseDTO(7L, "Butiá", null, new TaxonomyItemResponseDTO(4L, "Palmeira"),
-                    new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), 2, "url")),
+                    new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), 2, "url", false)),
             new PlantFacetsResponseDTO(EMPTY_FACET, new OriginFacetResponseDTO(1, 1, List.of()), EMPTY_FACET, EMPTY_FACET));
 
     @Autowired
