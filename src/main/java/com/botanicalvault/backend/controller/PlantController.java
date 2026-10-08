@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.botanicalvault.backend.dto.request.PlantCreateRequestDTO;
 import com.botanicalvault.backend.dto.request.PlantSearchRequestDTO;
+import com.botanicalvault.backend.dto.request.PlantUpdateRequestDTO;
 import com.botanicalvault.backend.dto.response.PlantResponseDTO;
 import com.botanicalvault.backend.dto.response.PlantSearchResponseDTO;
 import com.botanicalvault.backend.service.PlantService;
@@ -14,10 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,5 +58,24 @@ public class PlantController {
         PlantResponseDTO response = plantService.findById(id);
         log.info("GET /plants/{} - Success", id);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PlantResponseDTO> update(
+            @PathVariable Long id,
+            @Valid @RequestPart("plant") PlantUpdateRequestDTO dto,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        log.info("PUT /plants/{} - commonName: {}", id, dto.commonName());
+        PlantResponseDTO response = plantService.update(id, dto, files);
+        log.info("PUT /plants/{} - Success", id);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("DELETE /plants/{}", id);
+        plantService.delete(id);
+        log.info("DELETE /plants/{} - Success", id);
+        return ResponseEntity.noContent().build();
     }
 }

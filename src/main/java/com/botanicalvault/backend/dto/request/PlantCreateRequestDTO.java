@@ -28,7 +28,7 @@ public record PlantCreateRequestDTO(
 
     @NotEmpty(message = "At least one image is required")
     List<@Valid @NotNull PlantImageRequestDTO> images
-) {
+) implements PlantFieldsRequest {
     public PlantCreateRequestDTO {
         originIds = originIds == null ? List.of() : List.copyOf(originIds);
     }

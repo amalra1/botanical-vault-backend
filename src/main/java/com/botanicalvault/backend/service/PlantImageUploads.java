@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import com.botanicalvault.backend.constants.ErrorCode;
-import com.botanicalvault.backend.dto.request.PlantImageRequestDTO;
 import com.botanicalvault.backend.exception.BusinessException;
 import com.botanicalvault.backend.util.PngFiles;
 import com.botanicalvault.backend.util.Texts;
@@ -18,22 +17,23 @@ import org.springframework.web.multipart.MultipartFile;
 public class PlantImageUploads {
     private static final String FALLBACK_FILENAME = "image.png";
 
-    public List<PendingImage> read(List<PlantImageRequestDTO> images, List<MultipartFile> files) {
-        if (files == null || files.size() != images.size()) {
-            throw new BusinessException(ErrorCode.IMAGE_FILES_MISMATCH, "Each image needs exactly one file");
+    public List<PendingImage> read(List<Long> viewIds, List<MultipartFile> files) {
+        List<MultipartFile> provided = files == null ? List.of() : files;
+        if (provided.size() != viewIds.size()) {
+            throw new BusinessException(ErrorCode.IMAGE_FILES_MISMATCH, "Each new image needs exactly one file");
         }
-        return IntStream.range(0, images.size())
-                .mapToObj(index -> toPendingImage(images.get(index), files.get(index)))
+        return IntStream.range(0, viewIds.size())
+                .mapToObj(index -> toPendingImage(viewIds.get(index), provided.get(index)))
                 .toList();
     }
 
-    private PendingImage toPendingImage(PlantImageRequestDTO image, MultipartFile file) {
+    private PendingImage toPendingImage(Long viewId, MultipartFile file) {
         String filename = filenameOf(file);
         byte[] content = contentOf(file);
         if (!PngFiles.hasPngSignature(content)) {
             throw new BusinessException(ErrorCode.INVALID_IMAGE_FORMAT, "Only PNG images are accepted: " + filename);
         }
-        return new PendingImage(content, filename, image.viewId());
+        return new PendingImage(content, filename, viewId);
     }
 
     private static String filenameOf(MultipartFile file) {

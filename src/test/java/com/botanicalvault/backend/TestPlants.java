@@ -21,6 +21,7 @@ public final class TestPlants {
     public static final Origin ATLANTIC_FOREST = Origin.builder().id(2L).name("Mata Atlântica").position(2).build();
     public static final ImageView ELEVATION = ImageView.builder().id(1L).name("Elevação").position(1).build();
     public static final ImageView TOP = ImageView.builder().id(2L).name("Vista superior").position(2).build();
+    private static final long IMAGE_ID_FACTOR = 100;
 
     private TestPlants() {
     }
@@ -37,6 +38,7 @@ public final class TestPlants {
                 .build();
         for (int index = 0; index < views.size(); index++) {
             plant.addImage(PlantImage.builder()
+                    .id(id * IMAGE_ID_FACTOR + index)
                     .view(views.get(index))
                     .storageKey(commonName + index + ".png")
                     .originalFilename(commonName + ".png")

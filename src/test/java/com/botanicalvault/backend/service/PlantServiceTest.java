@@ -39,8 +39,9 @@ class PlantServiceTest {
     private final PlantRepository plantRepository = mock(PlantRepository.class);
     private final PlantReferenceResolver references = mock(PlantReferenceResolver.class);
     private final ImageStorage imageStorage = mock(ImageStorage.class);
-    private final PlantService plantService = new PlantService(
-            plantRepository, references, new PlantImageUploads(), imageStorage, new StoredImageCleanup(imageStorage));
+    private final StoredImageCleanup cleanup = new StoredImageCleanup(imageStorage);
+    private final PlantService plantService = new PlantService(plantRepository, new PlantFields(references),
+            new PlantImageSync(references, new PlantImageUploads(), imageStorage, cleanup), imageStorage, cleanup);
 
     @BeforeEach
     void setUp() {

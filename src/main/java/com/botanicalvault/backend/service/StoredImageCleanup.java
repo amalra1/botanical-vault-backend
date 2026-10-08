@@ -31,6 +31,19 @@ public class StoredImageCleanup {
         });
     }
 
+    public void deleteAfterCommit(List<String> keys) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            keys.forEach(this::deleteQuietly);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                keys.forEach(StoredImageCleanup.this::deleteQuietly);
+            }
+        });
+    }
+
     private void deleteQuietly(String key) {
         try {
             imageStorage.delete(key);
