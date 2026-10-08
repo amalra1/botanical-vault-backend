@@ -1,9 +1,7 @@
 package com.botanicalvault.backend.entity;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -70,7 +68,7 @@ public class Plant {
     @OneToMany(mappedBy = "plant", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("position")
     @Builder.Default
-    private List<PlantImage> images = new ArrayList<>();
+    private Set<PlantImage> images = new LinkedHashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

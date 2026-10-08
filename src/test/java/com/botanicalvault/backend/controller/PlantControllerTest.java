@@ -2,6 +2,7 @@ package com.botanicalvault.backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -16,7 +17,14 @@ import java.util.Optional;
 import com.botanicalvault.backend.TestPngs;
 import com.botanicalvault.backend.config.SecurityConfig;
 import com.botanicalvault.backend.constants.ErrorCode;
+import com.botanicalvault.backend.constants.PlantSort;
+import com.botanicalvault.backend.dto.request.PlantSearchRequestDTO;
+import com.botanicalvault.backend.dto.response.FacetResponseDTO;
+import com.botanicalvault.backend.dto.response.OriginFacetResponseDTO;
+import com.botanicalvault.backend.dto.response.PlantFacetsResponseDTO;
 import com.botanicalvault.backend.dto.response.PlantResponseDTO;
+import com.botanicalvault.backend.dto.response.PlantSearchResponseDTO;
+import com.botanicalvault.backend.dto.response.PlantSummaryResponseDTO;
 import com.botanicalvault.backend.dto.response.SizeResponseDTO;
 import com.botanicalvault.backend.dto.response.TaxonomyItemResponseDTO;
 import com.botanicalvault.backend.entity.User;
@@ -49,6 +57,11 @@ class PlantControllerTest {
             7L, "Butiá", null, new TaxonomyItemResponseDTO(4L, "Palmeira"),
             new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), null, List.of(),
             Instant.parse("2026-10-07T12:00:00Z"), Instant.parse("2026-10-07T12:00:00Z"));
+    private static final FacetResponseDTO EMPTY_FACET = new FacetResponseDTO(1, List.of());
+    private static final PlantSearchResponseDTO SEARCH_RESULT = new PlantSearchResponseDTO(
+            List.of(new PlantSummaryResponseDTO(7L, "Butiá", null, new TaxonomyItemResponseDTO(4L, "Palmeira"),
+                    new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), 2, "url")),
+            new PlantFacetsResponseDTO(EMPTY_FACET, new OriginFacetResponseDTO(1, 1, List.of()), EMPTY_FACET, EMPTY_FACET));
 
     @Autowired
     private MockMvc mockMvc;
@@ -118,6 +131,69 @@ class PlantControllerTest {
         mockMvc.perform(get("/plants/99").header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value(ErrorCode.RESOURCE_NOT_FOUND.name()));
+    }
+
+    @Test
+    void searchRequiresToken() throws Exception {
+        mockMvc.perform(get("/plants")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void searchRejectsInvalidToken() throws Exception {
+        mockMvc.perform(get("/plants").header(HttpHeaders.AUTHORIZATION, "Bearer invalid"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void searchBindsFilters() throws Exception {
+        PlantSearchRequestDTO expected = new PlantSearchRequestDTO("buti", 4L, null, true, 2L, 1L, PlantSort.RECENT);
+        when(plantService.search(expected)).thenReturn(SEARCH_RESULT);
+
+        mockMvc.perform(get("/plants")
+                        .param("q", "buti").param("typeId", "4").param("unclassified", "true")
+                        .param("sizeId", "2").param("viewId", "1").param("sort", "RECENT")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.plants[0].coverUrl").value("url"))
+                .andExpect(jsonPath("$.plants[0].imageCount").value(2))
+                .andExpect(jsonPath("$.facets.origins.unclassified").value(1));
+        verify(plantService).search(expected);
+    }
+
+    @Test
+    void searchDefaultsToNameSort() throws Exception {
+        PlantSearchRequestDTO expected = new PlantSearchRequestDTO(null, null, null, false, null, null, PlantSort.NAME);
+        when(plantService.search(expected)).thenReturn(SEARCH_RESULT);
+
+        mockMvc.perform(get("/plants").header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andExpect(status().isOk());
+        verify(plantService).search(expected);
+    }
+
+    @Test
+    void searchRejectsTooLongQuery() throws Exception {
+        mockMvc.perform(get("/plants").param("q", "a".repeat(161)).header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(ErrorCode.VALIDATION_FAILED.name()))
+                .andExpect(jsonPath("$.fields.q").exists());
+    }
+
+    @Test
+    void searchRejectsUnknownSort() throws Exception {
+        mockMvc.perform(get("/plants").param("sort", "POPULAR").header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(ErrorCode.VALIDATION_FAILED.name()));
+    }
+
+    @Test
+    void searchReportsConflictingFilters() throws Exception {
+        when(plantService.search(any()))
+                .thenThrow(new BusinessException(ErrorCode.CONFLICTING_FILTERS, "Use either originId or unclassified"));
+
+        mockMvc.perform(get("/plants").param("originId", "1").param("unclassified", "true")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(ErrorCode.CONFLICTING_FILTERS.name()));
     }
 
     private static MockMultipartHttpServletRequestBuilder createRequest(String plantJson) {

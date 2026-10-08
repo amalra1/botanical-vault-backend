@@ -4,7 +4,9 @@ import java.net.URI;
 import java.util.List;
 
 import com.botanicalvault.backend.dto.request.PlantCreateRequestDTO;
+import com.botanicalvault.backend.dto.request.PlantSearchRequestDTO;
 import com.botanicalvault.backend.dto.response.PlantResponseDTO;
+import com.botanicalvault.backend.dto.response.PlantSearchResponseDTO;
 import com.botanicalvault.backend.service.PlantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +38,15 @@ public class PlantController {
         PlantResponseDTO response = plantService.create(dto, files);
         log.info("POST /plants - Success - ID: {}", response.id());
         return ResponseEntity.created(URI.create("/plants/" + response.id())).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<PlantSearchResponseDTO> search(@Valid @ModelAttribute PlantSearchRequestDTO dto) {
+        log.info("GET /plants - q: {}, typeId: {}, originId: {}, unclassified: {}, sizeId: {}, viewId: {}, sort: {}",
+                dto.q(), dto.typeId(), dto.originId(), dto.unclassified(), dto.sizeId(), dto.viewId(), dto.sort());
+        PlantSearchResponseDTO response = plantService.search(dto);
+        log.info("GET /plants - Success - results: {}", response.plants().size());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

@@ -5,7 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.botanicalvault.backend.dto.request.PlantCreateRequestDTO;
+import com.botanicalvault.backend.dto.request.PlantSearchRequestDTO;
 import com.botanicalvault.backend.dto.response.PlantResponseDTO;
+import com.botanicalvault.backend.dto.response.PlantSearchResponseDTO;
+import com.botanicalvault.backend.dto.response.PlantSummaryResponseDTO;
 import com.botanicalvault.backend.entity.ImageView;
 import com.botanicalvault.backend.entity.Plant;
 import com.botanicalvault.backend.entity.PlantImage;
@@ -52,6 +55,17 @@ public class PlantService {
         Plant plant = plantRepository.findDetailedById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Plant", id));
         return PlantMapper.toResponse(plant, imageStorage::readUrl);
+    }
+
+    @Transactional(readOnly = true)
+    public PlantSearchResponseDTO search(PlantSearchRequestDTO dto) {
+        PlantSearchCriteria criteria = PlantSearchCriteria.from(dto);
+        List<Plant> plants = plantRepository.findAllDetailed();
+        List<Plant> matching = plants.stream().filter(criteria::matches).toList();
+        List<PlantSummaryResponseDTO> summaries = PlantSorter.sort(matching, dto.sort()).stream()
+                .map(plant -> PlantMapper.toSummary(plant, imageStorage::readUrl))
+                .toList();
+        return new PlantSearchResponseDTO(summaries, PlantFacetCounter.count(plants, criteria));
     }
 
     private void storeImages(Plant plant, List<PendingImage> pendingImages, Map<Long, ImageView> views) {

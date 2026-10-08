@@ -6,6 +6,7 @@ import java.util.function.UnaryOperator;
 
 import com.botanicalvault.backend.dto.response.PlantImageResponseDTO;
 import com.botanicalvault.backend.dto.response.PlantResponseDTO;
+import com.botanicalvault.backend.dto.response.PlantSummaryResponseDTO;
 import com.botanicalvault.backend.dto.response.TaxonomyItemResponseDTO;
 import com.botanicalvault.backend.entity.Origin;
 import com.botanicalvault.backend.entity.Plant;
@@ -24,6 +25,25 @@ public class PlantMapper {
                 imagesOf(plant, urlForKey),
                 plant.getCreatedAt(),
                 plant.getUpdatedAt());
+    }
+
+    public static PlantSummaryResponseDTO toSummary(Plant plant, UnaryOperator<String> urlForKey) {
+        return new PlantSummaryResponseDTO(
+                plant.getId(),
+                plant.getCommonName(),
+                plant.getScientificName(),
+                TaxonomyMapper.toItemResponse(plant.getType()),
+                TaxonomyMapper.toSizeResponse(plant.getSize()),
+                originsOf(plant),
+                plant.getImages().size(),
+                coverUrlOf(plant, urlForKey));
+    }
+
+    private static String coverUrlOf(Plant plant, UnaryOperator<String> urlForKey) {
+        return plant.getImages().stream()
+                .min(Comparator.comparing(PlantImage::getPosition))
+                .map(image -> urlForKey.apply(image.getStorageKey()))
+                .orElse(null);
     }
 
     private static List<TaxonomyItemResponseDTO> originsOf(Plant plant) {
