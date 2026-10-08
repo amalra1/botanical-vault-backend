@@ -11,6 +11,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -30,6 +33,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponseDTO> handleUnreadableBody(HttpMessageNotReadableException ex) {
         return respond(ErrorCode.MALFORMED_REQUEST, "Request body is missing or malformed", Map.of());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponseDTO> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        return respond(ErrorCode.FILE_TOO_LARGE, "Uploaded files are too large", Map.of());
+    }
+
+    @ExceptionHandler({MissingServletRequestPartException.class, MultipartException.class})
+    public ResponseEntity<ErrorResponseDTO> handleMalformedMultipart(Exception ex) {
+        return respond(ErrorCode.MALFORMED_REQUEST, "Multipart request is missing or malformed", Map.of());
     }
 
     private ResponseEntity<ErrorResponseDTO> respond(ErrorCode errorCode, String message, Map<String, String> fields) {

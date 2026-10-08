@@ -27,7 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private static final String[] PUBLIC_GET_PATHS = {"/health"};
+    private static final String[] PUBLIC_GET_PATHS = {"/health", "/files/*"};
     private static final String[] PUBLIC_POST_PATHS = {"/auth/login"};
     private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
 
