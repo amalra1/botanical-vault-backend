@@ -27,7 +27,7 @@ logs/
 *.db
 *.sqlite
 docker-compose.yml
-storage/
+/storage/
 
 node_modules/
 npm-debug.log

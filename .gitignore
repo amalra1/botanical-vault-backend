@@ -24,7 +24,7 @@ logs/
 *.db
 *.sqlite
 
-storage/
+/storage/
 
 Thumbs.db
 
