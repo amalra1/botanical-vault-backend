@@ -1,5 +1,7 @@
 package com.botanicalvault.backend.service;
 
+import java.util.Optional;
+
 import com.botanicalvault.backend.constants.ErrorCode;
 import com.botanicalvault.backend.dto.request.LoginRequestDTO;
 import com.botanicalvault.backend.dto.response.LoginResponseDTO;
@@ -15,11 +17,18 @@ public class AuthService {
     private final AuthUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final LoginThrottle loginThrottle;
 
-    public LoginResponseDTO login(LoginRequestDTO dto) {
-        User user = userDetailsService.findByEmail(dto.email())
-                .filter(candidate -> passwordEncoder.matches(dto.password(), candidate.getPasswordHash()))
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Invalid email or password"));
+    public LoginResponseDTO login(LoginRequestDTO dto, String clientKey) {
+        loginThrottle.assertAllowed(clientKey);
+        Optional<User> authenticated = userDetailsService.findByEmail(dto.email())
+                .filter(candidate -> passwordEncoder.matches(dto.password(), candidate.getPasswordHash()));
+        if (authenticated.isEmpty()) {
+            loginThrottle.recordFailure(clientKey);
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Invalid email or password");
+        }
+        loginThrottle.recordSuccess(clientKey);
+        User user = authenticated.get();
         IssuedToken issued = jwtService.issue(user.getEmail());
         return new LoginResponseDTO(issued.token(), issued.expiresAt());
     }

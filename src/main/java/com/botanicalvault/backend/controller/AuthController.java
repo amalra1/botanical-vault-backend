@@ -1,11 +1,13 @@
 package com.botanicalvault.backend.controller;
 
+import com.botanicalvault.backend.config.ClientAddressResolver;
 import com.botanicalvault.backend.dto.request.LoginRequestDTO;
 import com.botanicalvault.backend.dto.response.LoginResponseDTO;
 import com.botanicalvault.backend.dto.response.UserResponseDTO;
 import com.botanicalvault.backend.entity.User;
 import com.botanicalvault.backend.mapper.UserMapper;
 import com.botanicalvault.backend.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -24,11 +26,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
+    private final ClientAddressResolver clientAddressResolver;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto,
+            HttpServletRequest request) {
         log.info("POST /auth/login");
-        LoginResponseDTO response = authService.login(dto);
+        LoginResponseDTO response = authService.login(dto, clientAddressResolver.resolve(request));
         log.info("POST /auth/login - Success");
         return ResponseEntity.ok(response);
     }

@@ -4,17 +4,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
+import com.botanicalvault.backend.config.ClientAddressResolver;
 import com.botanicalvault.backend.config.SecurityConfig;
 import com.botanicalvault.backend.constants.ErrorCode;
 import com.botanicalvault.backend.dto.response.LoginResponseDTO;
 import com.botanicalvault.backend.entity.User;
 import com.botanicalvault.backend.exception.BusinessException;
+import com.botanicalvault.backend.exception.LoginThrottledException;
 import com.botanicalvault.backend.repository.UserRepository;
 import com.botanicalvault.backend.service.AuthService;
 import com.botanicalvault.backend.service.AuthUserDetailsService;
@@ -47,9 +51,13 @@ class AuthControllerTest {
     @MockitoBean
     private UserRepository userRepository;
 
+    @MockitoBean
+    private ClientAddressResolver clientAddressResolver;
+
     @Test
     void loginReturnsToken() throws Exception {
-        when(authService.login(any())).thenReturn(new LoginResponseDTO(TOKEN, Instant.parse("2026-10-14T12:00:00Z")));
+        when(authService.login(any(), any()))
+                .thenReturn(new LoginResponseDTO(TOKEN, Instant.parse("2026-10-14T12:00:00Z")));
 
         mockMvc.perform(loginRequest("{\"email\":\"" + EMAIL + "\",\"password\":\"test-password\"}"))
                 .andExpect(status().isOk())
@@ -68,12 +76,24 @@ class AuthControllerTest {
 
     @Test
     void loginWithWrongCredentialsReturnsUnauthorized() throws Exception {
-        when(authService.login(any()))
+        when(authService.login(any(), any()))
                 .thenThrow(new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Invalid email or password"));
 
         mockMvc.perform(loginRequest("{\"email\":\"" + EMAIL + "\",\"password\":\"wrong-password\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value(ErrorCode.INVALID_CREDENTIALS.name()));
+    }
+
+    @Test
+    void throttledLoginReturnsTooManyRequestsWithRetryAfter() throws Exception {
+        when(authService.login(any(), any()))
+                .thenThrow(new LoginThrottledException(Duration.ofSeconds(899).plusMillis(1)));
+
+        mockMvc.perform(loginRequest("{\"email\":\"" + EMAIL + "\",\"password\":\"test-password\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string(HttpHeaders.RETRY_AFTER, "900"))
+                .andExpect(jsonPath("$.error").value(ErrorCode.TOO_MANY_LOGIN_ATTEMPTS.name()))
+                .andExpect(jsonPath("$.fields.retryAfterSeconds").value("900"));
     }
 
     @Test

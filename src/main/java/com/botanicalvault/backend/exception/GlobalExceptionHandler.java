@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import com.botanicalvault.backend.constants.ErrorCode;
 import com.botanicalvault.backend.dto.response.ErrorResponseDTO;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -17,6 +18,17 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final String RETRY_AFTER_FIELD = "retryAfterSeconds";
+
+    @ExceptionHandler(LoginThrottledException.class)
+    public ResponseEntity<ErrorResponseDTO> handleLoginThrottled(LoginThrottledException ex) {
+        String retryAfter = String.valueOf(ex.retryAfterSeconds());
+        ErrorResponseDTO body = new ErrorResponseDTO(
+                ex.getErrorCode().name(), ex.getMessage(), Map.of(RETRY_AFTER_FIELD, retryAfter));
+        return ResponseEntity.status(ex.getErrorCode().status())
+                .header(HttpHeaders.RETRY_AFTER, retryAfter)
+                .body(body);
+    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponseDTO> handleBusinessException(BusinessException ex) {

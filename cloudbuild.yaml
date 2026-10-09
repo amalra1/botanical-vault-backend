@@ -36,6 +36,8 @@ steps:
       - "0"
       - "--max-instances"
       - "1"
+      - "--timeout"
+      - "60"
       - "--update-env-vars"
       - "SPRING_PROFILES_ACTIVE=prod"
 
