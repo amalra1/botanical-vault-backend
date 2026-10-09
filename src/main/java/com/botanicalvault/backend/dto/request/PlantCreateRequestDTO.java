@@ -2,6 +2,7 @@ package com.botanicalvault.backend.dto.request;
 
 import java.util.List;
 
+import com.botanicalvault.backend.constants.LightExposure;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -24,6 +25,8 @@ public record PlantCreateRequestDTO(
 
     List<@NotNull Long> originIds,
 
+    List<@NotNull LightExposure> lightExposures,
+
     String notes,
 
     @NotEmpty(message = "At least one image is required")
@@ -31,5 +34,6 @@ public record PlantCreateRequestDTO(
 ) implements PlantFieldsRequest {
     public PlantCreateRequestDTO {
         originIds = originIds == null ? List.of() : List.copyOf(originIds);
+        lightExposures = lightExposures == null ? List.of() : List.copyOf(lightExposures);
     }
 }

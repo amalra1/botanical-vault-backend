@@ -10,10 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface PlantRepository extends JpaRepository<Plant, Long> {
 
-    @EntityGraph(attributePaths = {"type", "size", "origins", "images", "images.view"})
+    @EntityGraph(attributePaths = {"type", "size", "origins", "images", "images.view", "lightExposures"})
     Optional<Plant> findDetailedById(Long id);
 
-    @EntityGraph(attributePaths = {"type", "size", "origins", "images", "images.view"})
+    @EntityGraph(attributePaths = {"type", "size", "origins", "images", "images.view", "lightExposures"})
     @Query("select p from Plant p")
     List<Plant> findAllDetailed();
 }

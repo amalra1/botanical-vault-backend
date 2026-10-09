@@ -1,5 +1,6 @@
 package com.botanicalvault.backend.dto.request;
 
+import com.botanicalvault.backend.constants.LightExposure;
 import com.botanicalvault.backend.constants.PlantSort;
 import jakarta.validation.constraints.Size;
 
@@ -16,6 +17,8 @@ public record PlantSearchRequestDTO(
     Long sizeId,
 
     Long viewId,
+
+    LightExposure lightExposure,
 
     PlantSort sort
 ) {

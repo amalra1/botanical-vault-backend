@@ -7,8 +7,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.botanicalvault.backend.constants.LightExposure;
 import com.botanicalvault.backend.dto.response.FacetCountResponseDTO;
 import com.botanicalvault.backend.dto.response.FacetResponseDTO;
+import com.botanicalvault.backend.dto.response.LightExposureCountResponseDTO;
+import com.botanicalvault.backend.dto.response.LightExposureFacetResponseDTO;
 import com.botanicalvault.backend.dto.response.OriginFacetResponseDTO;
 import com.botanicalvault.backend.dto.response.PlantFacetsResponseDTO;
 import com.botanicalvault.backend.entity.Origin;
@@ -24,7 +27,8 @@ public final class PlantFacetCounter {
                 facet(matching(plants, criteria.withoutType()), plant -> Stream.of(plant.getType().getId())),
                 originFacet(matching(plants, criteria.withoutOrigin())),
                 facet(matching(plants, criteria.withoutSize()), plant -> Stream.of(plant.getSize().getId())),
-                facet(matching(plants, criteria.withoutView()), PlantFacetCounter::viewIdsOf));
+                facet(matching(plants, criteria.withoutView()), PlantFacetCounter::viewIdsOf),
+                lightExposureFacet(matching(plants, criteria.withoutLightExposure())));
     }
 
     private static List<Plant> matching(List<Plant> plants, PlantSearchCriteria criteria) {
@@ -38,6 +42,16 @@ public final class PlantFacetCounter {
     private static OriginFacetResponseDTO originFacet(List<Plant> plants) {
         long unclassified = plants.stream().filter(plant -> plant.getOrigins().isEmpty()).count();
         return new OriginFacetResponseDTO(plants.size(), unclassified, countsOf(plants, PlantFacetCounter::originIdsOf));
+    }
+
+    private static LightExposureFacetResponseDTO lightExposureFacet(List<Plant> plants) {
+        Map<LightExposure, Long> counts = plants.stream()
+                .flatMap(plant -> plant.getLightExposures().stream())
+                .collect(Collectors.groupingBy(Function.identity(), TreeMap::new, Collectors.counting()));
+        List<LightExposureCountResponseDTO> options = counts.entrySet().stream()
+                .map(entry -> new LightExposureCountResponseDTO(entry.getKey(), entry.getValue()))
+                .toList();
+        return new LightExposureFacetResponseDTO(plants.size(), options);
     }
 
     private static List<FacetCountResponseDTO> countsOf(List<Plant> plants, Function<Plant, Stream<Long>> idsOf) {

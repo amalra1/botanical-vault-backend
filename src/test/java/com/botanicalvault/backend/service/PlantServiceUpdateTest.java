@@ -20,6 +20,7 @@ import java.util.Set;
 
 import com.botanicalvault.backend.TestPlants;
 import com.botanicalvault.backend.TestPngs;
+import com.botanicalvault.backend.constants.LightExposure;
 import com.botanicalvault.backend.dto.request.PlantImageUpdateRequestDTO;
 import com.botanicalvault.backend.dto.request.PlantUpdateRequestDTO;
 import com.botanicalvault.backend.dto.response.PlantImageResponseDTO;
@@ -92,6 +93,18 @@ class PlantServiceUpdateTest {
     }
 
     @Test
+    void replacesAndClearsLightExposures() {
+        butia.getLightExposures().add(LightExposure.SHADE);
+        List<PlantImageUpdateRequestDTO> images = List.of(
+                new PlantImageUpdateRequestDTO(ELEVATION_IMAGE_ID, 1L), new PlantImageUpdateRequestDTO(TOP_IMAGE_ID, 2L));
+        PlantUpdateRequestDTO sunny = new PlantUpdateRequestDTO("Butiá", null, 4L, 1L, null,
+                List.of(LightExposure.FULL_SUN), null, images);
+
+        assertThat(plantService.update(PLANT_ID, sunny, null).lightExposures()).containsExactly(LightExposure.FULL_SUN);
+        assertThat(plantService.update(PLANT_ID, request("Butiá", images), null).lightExposures()).isEmpty();
+    }
+
+    @Test
     void deletesPlantAndItsFiles() {
         plantService.delete(PLANT_ID);
 
@@ -112,6 +125,6 @@ class PlantServiceUpdateTest {
     }
 
     private static PlantUpdateRequestDTO request(String commonName, List<PlantImageUpdateRequestDTO> images) {
-        return new PlantUpdateRequestDTO(commonName, null, 4L, 1L, null, " ", images);
+        return new PlantUpdateRequestDTO(commonName, null, 4L, 1L, null, null, " ", images);
     }
 }

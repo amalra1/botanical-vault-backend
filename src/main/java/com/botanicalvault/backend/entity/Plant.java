@@ -4,9 +4,14 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.botanicalvault.backend.constants.LightExposure;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,6 +40,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Builder
 public class Plant {
     private static final int NAME_MAX_LENGTH = 160;
+    private static final int LIGHT_EXPOSURE_MAX_LENGTH = 20;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,6 +67,13 @@ public class Plant {
             inverseJoinColumns = @JoinColumn(name = "origin_id"))
     @Builder.Default
     private Set<Origin> origins = new LinkedHashSet<>();
+
+    @ElementCollection
+    @CollectionTable(name = "plant_light_exposures", joinColumns = @JoinColumn(name = "plant_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "exposure", nullable = false, length = LIGHT_EXPOSURE_MAX_LENGTH)
+    @Builder.Default
+    private Set<LightExposure> lightExposures = new LinkedHashSet<>();
 
     @Column(columnDefinition = "TEXT")
     private String notes;

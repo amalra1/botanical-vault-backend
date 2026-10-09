@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import com.botanicalvault.backend.constants.LightExposure;
+
 import com.botanicalvault.backend.entity.ImageView;
 import com.botanicalvault.backend.entity.Origin;
 import com.botanicalvault.backend.entity.Plant;
@@ -24,6 +26,11 @@ public final class TestPlants {
     private static final long IMAGE_ID_FACTOR = 100;
 
     private TestPlants() {
+    }
+
+    public static Plant withLight(Plant plant, LightExposure... exposures) {
+        plant.getLightExposures().addAll(List.of(exposures));
+        return plant;
     }
 
     public static Plant plant(Long id, String commonName, PlantType type, Size size, List<Origin> origins,

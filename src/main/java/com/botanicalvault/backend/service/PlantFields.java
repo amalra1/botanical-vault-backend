@@ -18,6 +18,8 @@ public class PlantFields {
         plant.setSize(references.size(request.sizeId()));
         plant.getOrigins().clear();
         plant.getOrigins().addAll(references.origins(request.originIds()));
+        plant.getLightExposures().clear();
+        plant.getLightExposures().addAll(request.lightExposures());
         plant.setNotes(Texts.trimToNull(request.notes()));
     }
 }

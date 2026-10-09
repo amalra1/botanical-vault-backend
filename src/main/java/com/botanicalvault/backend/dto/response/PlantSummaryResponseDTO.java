@@ -2,6 +2,8 @@ package com.botanicalvault.backend.dto.response;
 
 import java.util.List;
 
+import com.botanicalvault.backend.constants.LightExposure;
+
 public record PlantSummaryResponseDTO(
     Long id,
     String commonName,
@@ -9,6 +11,7 @@ public record PlantSummaryResponseDTO(
     TaxonomyItemResponseDTO type,
     SizeResponseDTO size,
     List<TaxonomyItemResponseDTO> origins,
+    List<LightExposure> lightExposures,
     int imageCount,
     String coverUrl,
     boolean favorite

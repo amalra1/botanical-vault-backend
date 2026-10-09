@@ -45,8 +45,9 @@ public class PlantController {
 
     @GetMapping
     public ResponseEntity<PlantSearchResponseDTO> search(@Valid @ModelAttribute PlantSearchRequestDTO dto) {
-        log.info("GET /plants - q: {}, typeId: {}, originId: {}, unclassified: {}, sizeId: {}, viewId: {}, sort: {}",
-                dto.q(), dto.typeId(), dto.originId(), dto.unclassified(), dto.sizeId(), dto.viewId(), dto.sort());
+        log.info("GET /plants - q: {}, typeId: {}, originId: {}, unclassified: {}, sizeId: {}, viewId: {}, "
+                + "lightExposure: {}, sort: {}", dto.q(), dto.typeId(), dto.originId(), dto.unclassified(),
+                dto.sizeId(), dto.viewId(), dto.lightExposure(), dto.sort());
         PlantSearchResponseDTO response = plantService.search(dto);
         log.info("GET /plants - Success - results: {}", response.plants().size());
         return ResponseEntity.ok(response);

@@ -31,7 +31,8 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 class PlantIntegrationTest {
     private static final String BUTIA =
             "{\"commonName\":\"Butiá\",\"scientificName\":\"Butia eriospatha\",\"typeId\":4,\"sizeId\":2,"
-                    + "\"originIds\":[1],\"images\":[{\"viewId\":1},{\"viewId\":2}]}";
+                    + "\"originIds\":[1],\"lightExposures\":[\"FULL_SUN\",\"PARTIAL_SHADE\"],"
+                    + "\"images\":[{\"viewId\":1},{\"viewId\":2}]}";
     private static final byte[] COVER = TestPngs.transparent(4, 6);
     private static final byte[] TOP_VIEW = TestPngs.transparent(5, 5);
 
@@ -57,6 +58,9 @@ class PlantIntegrationTest {
         String detail = mockMvc.perform(get("/plants/" + id).header(HttpHeaders.AUTHORIZATION, token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.images.length()").value(2))
+                .andExpect(jsonPath("$.lightExposures.length()").value(2))
+                .andExpect(jsonPath("$.lightExposures[0]").value("PARTIAL_SHADE"))
+                .andExpect(jsonPath("$.lightExposures[1]").value("FULL_SUN"))
                 .andReturn().getResponse().getContentAsString();
         String coverUrl = JsonPath.read(detail, "$.images[0].url");
 

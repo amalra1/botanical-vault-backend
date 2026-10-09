@@ -2,6 +2,8 @@ package com.botanicalvault.backend.dto.request;
 
 import java.util.List;
 
+import com.botanicalvault.backend.constants.LightExposure;
+
 public interface PlantFieldsRequest {
     String commonName();
 
@@ -12,6 +14,8 @@ public interface PlantFieldsRequest {
     Long sizeId();
 
     List<Long> originIds();
+
+    List<LightExposure> lightExposures();
 
     String notes();
 }

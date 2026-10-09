@@ -29,12 +29,13 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 class PlantSearchIntegrationTest {
     private static final String QUERY = "iris-busca";
     private static final String FIRST =
-            "{\"commonName\":\"Íris-busca Um\",\"typeId\":1,\"sizeId\":1,\"originIds\":[1],\"images\":[{\"viewId\":1}]}";
+            "{\"commonName\":\"Íris-busca Um\",\"typeId\":1,\"sizeId\":1,\"originIds\":[1],"
+                    + "\"lightExposures\":[\"PARTIAL_SHADE\",\"FULL_SUN\"],\"images\":[{\"viewId\":1}]}";
     private static final String SECOND =
             "{\"commonName\":\"Íris-busca Dois\",\"typeId\":2,\"sizeId\":3,\"images\":[{\"viewId\":2}]}";
     private static final String THIRD =
             "{\"commonName\":\"Íris-busca Três\",\"typeId\":1,\"sizeId\":2,\"originIds\":[1,2],"
-                    + "\"images\":[{\"viewId\":1},{\"viewId\":3}]}";
+                    + "\"lightExposures\":[\"FULL_SUN\"],\"images\":[{\"viewId\":1},{\"viewId\":3}]}";
 
     @Autowired
     private MockMvc mockMvc;
@@ -94,6 +95,18 @@ class PlantSearchIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.plants.length()").value(1))
                 .andExpect(jsonPath("$.plants[0].commonName").value("Íris-busca Dois"));
+    }
+
+    @Test
+    void filtersByLightExposure() throws Exception {
+        mockMvc.perform(search().param("q", QUERY).param("lightExposure", "FULL_SUN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.plants.length()").value(2))
+                .andExpect(jsonPath("$.plants[0].lightExposures[0]").value("FULL_SUN"))
+                .andExpect(jsonPath("$.facets.lightExposures.all").value(3));
+        mockMvc.perform(search().param("q", QUERY).param("lightExposure", "SHADE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.plants.length()").value(0));
     }
 
     @Test

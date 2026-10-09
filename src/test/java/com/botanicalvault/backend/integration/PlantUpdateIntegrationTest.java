@@ -32,10 +32,10 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class PlantUpdateIntegrationTest {
     private static final String JERIVA =
-            "{\"commonName\":\"Jerivá\",\"typeId\":4,\"sizeId\":3,\"images\":[{\"viewId\":1},{\"viewId\":2}]}";
+            "{\"commonName\":\"Jerivá\",\"typeId\":4,\"sizeId\":3,\"lightExposures\":[\"SHADE\"],\"images\":[{\"viewId\":1},{\"viewId\":2}]}";
     private static final String UPDATE_TEMPLATE =
             "{\"commonName\":\"Jerivá-anão\",\"typeId\":4,\"sizeId\":2,\"originIds\":[2],"
-                    + "\"images\":[{\"viewId\":3},{\"id\":%d,\"viewId\":1}]}";
+                    + "\"lightExposures\":[\"FULL_SUN\"],\"images\":[{\"viewId\":3},{\"id\":%d,\"viewId\":1}]}";
 
     @Autowired
     private MockMvc mockMvc;
@@ -56,6 +56,8 @@ class PlantUpdateIntegrationTest {
                 .andExpect(jsonPath("$.commonName").value("Jerivá-anão"))
                 .andExpect(jsonPath("$.size.name").value("Médio"))
                 .andExpect(jsonPath("$.origins[0].name").value("Mata Atlântica"))
+                .andExpect(jsonPath("$.lightExposures.length()").value(1))
+                .andExpect(jsonPath("$.lightExposures[0]").value("FULL_SUN"))
                 .andExpect(jsonPath("$.images.length()").value(2))
                 .andExpect(jsonPath("$.images[0].originalFilename").value("jeriva-perspectiva.png"))
                 .andExpect(jsonPath("$.images[0].id").isNumber())

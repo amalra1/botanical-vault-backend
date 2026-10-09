@@ -3,6 +3,7 @@ package com.botanicalvault.backend.service;
 import java.util.Objects;
 
 import com.botanicalvault.backend.constants.ErrorCode;
+import com.botanicalvault.backend.constants.LightExposure;
 import com.botanicalvault.backend.dto.request.PlantSearchRequestDTO;
 import com.botanicalvault.backend.entity.Plant;
 import com.botanicalvault.backend.exception.BusinessException;
@@ -14,7 +15,8 @@ public record PlantSearchCriteria(
     Long originId,
     boolean unclassified,
     Long sizeId,
-    Long viewId
+    Long viewId,
+    LightExposure lightExposure
 ) {
     public static PlantSearchCriteria from(PlantSearchRequestDTO dto) {
         if (dto.originId() != null && dto.unclassified()) {
@@ -26,7 +28,8 @@ public record PlantSearchCriteria(
                 dto.originId(),
                 dto.unclassified(),
                 dto.sizeId(),
-                dto.viewId());
+                dto.viewId(),
+                dto.lightExposure());
     }
 
     public boolean matches(Plant plant) {
@@ -34,23 +37,28 @@ public record PlantSearchCriteria(
                 && matchesType(plant)
                 && matchesOrigin(plant)
                 && matchesSize(plant)
-                && matchesView(plant);
+                && matchesView(plant)
+                && matchesLightExposure(plant);
     }
 
     public PlantSearchCriteria withoutType() {
-        return new PlantSearchCriteria(query, null, originId, unclassified, sizeId, viewId);
+        return new PlantSearchCriteria(query, null, originId, unclassified, sizeId, viewId, lightExposure);
     }
 
     public PlantSearchCriteria withoutOrigin() {
-        return new PlantSearchCriteria(query, typeId, null, false, sizeId, viewId);
+        return new PlantSearchCriteria(query, typeId, null, false, sizeId, viewId, lightExposure);
     }
 
     public PlantSearchCriteria withoutSize() {
-        return new PlantSearchCriteria(query, typeId, originId, unclassified, null, viewId);
+        return new PlantSearchCriteria(query, typeId, originId, unclassified, null, viewId, lightExposure);
     }
 
     public PlantSearchCriteria withoutView() {
-        return new PlantSearchCriteria(query, typeId, originId, unclassified, sizeId, null);
+        return new PlantSearchCriteria(query, typeId, originId, unclassified, sizeId, null, lightExposure);
+    }
+
+    public PlantSearchCriteria withoutLightExposure() {
+        return new PlantSearchCriteria(query, typeId, originId, unclassified, sizeId, viewId, null);
     }
 
     private boolean matchesQuery(Plant plant) {
@@ -78,5 +86,9 @@ public record PlantSearchCriteria(
     private boolean matchesView(Plant plant) {
         return viewId == null
                 || plant.getImages().stream().anyMatch(image -> Objects.equals(image.getView().getId(), viewId));
+    }
+
+    private boolean matchesLightExposure(Plant plant) {
+        return lightExposure == null || plant.getLightExposures().contains(lightExposure);
     }
 }

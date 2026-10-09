@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
+import com.botanicalvault.backend.constants.LightExposure;
 import com.botanicalvault.backend.dto.response.PlantImageResponseDTO;
 import com.botanicalvault.backend.dto.response.PlantResponseDTO;
 import com.botanicalvault.backend.dto.response.PlantSummaryResponseDTO;
@@ -22,6 +23,7 @@ public class PlantMapper {
                 TaxonomyMapper.toItemResponse(plant.getType()),
                 TaxonomyMapper.toSizeResponse(plant.getSize()),
                 originsOf(plant),
+                lightExposuresOf(plant),
                 plant.getNotes(),
                 imagesOf(plant, urlForKey),
                 plant.getCreatedAt(),
@@ -38,6 +40,7 @@ public class PlantMapper {
                 TaxonomyMapper.toItemResponse(plant.getType()),
                 TaxonomyMapper.toSizeResponse(plant.getSize()),
                 originsOf(plant),
+                lightExposuresOf(plant),
                 plant.getImages().size(),
                 coverUrlOf(plant, urlForKey),
                 favorite);
@@ -55,6 +58,10 @@ public class PlantMapper {
                 .sorted(Comparator.comparing(Origin::getPosition))
                 .map(TaxonomyMapper::toItemResponse)
                 .toList();
+    }
+
+    private static List<LightExposure> lightExposuresOf(Plant plant) {
+        return plant.getLightExposures().stream().sorted().toList();
     }
 
     private static List<PlantImageResponseDTO> imagesOf(Plant plant, UnaryOperator<String> urlForKey) {

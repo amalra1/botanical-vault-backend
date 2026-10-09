@@ -2,6 +2,7 @@ package com.botanicalvault.backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -17,9 +18,11 @@ import java.util.Optional;
 import com.botanicalvault.backend.TestPngs;
 import com.botanicalvault.backend.config.SecurityConfig;
 import com.botanicalvault.backend.constants.ErrorCode;
+import com.botanicalvault.backend.constants.LightExposure;
 import com.botanicalvault.backend.constants.PlantSort;
 import com.botanicalvault.backend.dto.request.PlantSearchRequestDTO;
 import com.botanicalvault.backend.dto.response.FacetResponseDTO;
+import com.botanicalvault.backend.dto.response.LightExposureFacetResponseDTO;
 import com.botanicalvault.backend.dto.response.OriginFacetResponseDTO;
 import com.botanicalvault.backend.dto.response.PlantFacetsResponseDTO;
 import com.botanicalvault.backend.dto.response.PlantResponseDTO;
@@ -55,13 +58,14 @@ class PlantControllerTest {
             "{\"commonName\":\"Butiá\",\"typeId\":4,\"sizeId\":2,\"images\":[{\"viewId\":1}]}";
     private static final PlantResponseDTO CREATED = new PlantResponseDTO(
             7L, "Butiá", null, new TaxonomyItemResponseDTO(4L, "Palmeira"),
-            new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), null, List.of(),
+            new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), List.of(), null, List.of(),
             Instant.parse("2026-10-07T12:00:00Z"), Instant.parse("2026-10-07T12:00:00Z"), false, List.of());
     private static final FacetResponseDTO EMPTY_FACET = new FacetResponseDTO(1, List.of());
     private static final PlantSearchResponseDTO SEARCH_RESULT = new PlantSearchResponseDTO(
             List.of(new PlantSummaryResponseDTO(7L, "Butiá", null, new TaxonomyItemResponseDTO(4L, "Palmeira"),
-                    new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), 2, "url", false)),
-            new PlantFacetsResponseDTO(EMPTY_FACET, new OriginFacetResponseDTO(1, 1, List.of()), EMPTY_FACET, EMPTY_FACET));
+                    new SizeResponseDTO(2L, "Médio", "M · média"), List.of(), List.of(), 2, "url", false)),
+            new PlantFacetsResponseDTO(EMPTY_FACET, new OriginFacetResponseDTO(1, 1, List.of()), EMPTY_FACET, EMPTY_FACET,
+                    new LightExposureFacetResponseDTO(1, List.of())));
 
     @Autowired
     private MockMvc mockMvc;
@@ -115,6 +119,28 @@ class PlantControllerTest {
     }
 
     @Test
+    void createAcceptsLightExposures() throws Exception {
+        String withLight = "{\"commonName\":\"Butiá\",\"typeId\":4,\"sizeId\":2,"
+                + "\"lightExposures\":[\"PARTIAL_SHADE\",\"FULL_SUN\"],\"images\":[{\"viewId\":1}]}";
+        when(plantService.create(any(), anyList())).thenReturn(CREATED);
+
+        mockMvc.perform(createRequest(withLight).header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andExpect(status().isCreated());
+        verify(plantService).create(argThat(dto -> dto.lightExposures()
+                .equals(List.of(LightExposure.PARTIAL_SHADE, LightExposure.FULL_SUN))), anyList());
+    }
+
+    @Test
+    void createRejectsUnknownLightExposure() throws Exception {
+        String withUnknownLight = "{\"commonName\":\"Butiá\",\"typeId\":4,\"sizeId\":2,"
+                + "\"lightExposures\":[\"MOONLIGHT\"],\"images\":[{\"viewId\":1}]}";
+
+        mockMvc.perform(createRequest(withUnknownLight).header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(ErrorCode.MALFORMED_REQUEST.name()));
+    }
+
+    @Test
     void createReportsInvalidImageFormat() throws Exception {
         when(plantService.create(any(), anyList()))
                 .thenThrow(new BusinessException(ErrorCode.INVALID_IMAGE_FORMAT, "Only PNG images are accepted"));
@@ -146,12 +172,14 @@ class PlantControllerTest {
 
     @Test
     void searchBindsFilters() throws Exception {
-        PlantSearchRequestDTO expected = new PlantSearchRequestDTO("buti", 4L, null, true, 2L, 1L, PlantSort.RECENT);
+        PlantSearchRequestDTO expected = new PlantSearchRequestDTO("buti", 4L, null, true, 2L, 1L,
+                LightExposure.FULL_SUN, PlantSort.RECENT);
         when(plantService.search(expected)).thenReturn(SEARCH_RESULT);
 
         mockMvc.perform(get("/plants")
                         .param("q", "buti").param("typeId", "4").param("unclassified", "true")
-                        .param("sizeId", "2").param("viewId", "1").param("sort", "RECENT")
+                        .param("sizeId", "2").param("viewId", "1").param("lightExposure", "FULL_SUN")
+                        .param("sort", "RECENT")
                         .header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.plants[0].coverUrl").value("url"))
@@ -162,7 +190,8 @@ class PlantControllerTest {
 
     @Test
     void searchDefaultsToNameSort() throws Exception {
-        PlantSearchRequestDTO expected = new PlantSearchRequestDTO(null, null, null, false, null, null, PlantSort.NAME);
+        PlantSearchRequestDTO expected =
+                new PlantSearchRequestDTO(null, null, null, false, null, null, null, PlantSort.NAME);
         when(plantService.search(expected)).thenReturn(SEARCH_RESULT);
 
         mockMvc.perform(get("/plants").header(HttpHeaders.AUTHORIZATION, BEARER))
@@ -181,6 +210,13 @@ class PlantControllerTest {
     @Test
     void searchRejectsUnknownSort() throws Exception {
         mockMvc.perform(get("/plants").param("sort", "POPULAR").header(HttpHeaders.AUTHORIZATION, BEARER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(ErrorCode.VALIDATION_FAILED.name()));
+    }
+
+    @Test
+    void searchRejectsUnknownLightExposure() throws Exception {
+        mockMvc.perform(get("/plants").param("lightExposure", "MOONLIGHT").header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value(ErrorCode.VALIDATION_FAILED.name()));
     }

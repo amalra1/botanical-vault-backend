@@ -16,6 +16,7 @@ import java.util.Set;
 
 import com.botanicalvault.backend.TestPngs;
 import com.botanicalvault.backend.constants.ErrorCode;
+import com.botanicalvault.backend.constants.LightExposure;
 import com.botanicalvault.backend.dto.request.PlantCreateRequestDTO;
 import com.botanicalvault.backend.dto.request.PlantImageRequestDTO;
 import com.botanicalvault.backend.dto.response.PlantResponseDTO;
@@ -73,6 +74,24 @@ class PlantServiceTest {
     }
 
     @Test
+    void storesLightExposuresInScaleOrder() {
+        List<PlantImageRequestDTO> images = List.of(new PlantImageRequestDTO(1L));
+        PlantCreateRequestDTO dto = new PlantCreateRequestDTO("Butiá", null, 4L, 2L, null,
+                List.of(LightExposure.FULL_SUN, LightExposure.PARTIAL_SHADE), null, images);
+
+        PlantResponseDTO response = plantService.create(dto, List.of(png("butia.png")));
+
+        assertThat(response.lightExposures()).containsExactly(LightExposure.PARTIAL_SHADE, LightExposure.FULL_SUN);
+    }
+
+    @Test
+    void lightExposuresAreOptional() {
+        PlantResponseDTO response = plantService.create(request("Butiá", null, List.of(1L)), List.of(png("a.png")));
+
+        assertThat(response.lightExposures()).isEmpty();
+    }
+
+    @Test
     void rejectsMismatchBetweenImagesAndFiles() {
         assertError(() -> plantService.create(request("Butiá", null, List.of(1L, 2L)), List.of(png("a.png"))),
                 ErrorCode.IMAGE_FILES_MISMATCH);
@@ -99,7 +118,7 @@ class PlantServiceTest {
 
     private static PlantCreateRequestDTO request(String commonName, String scientificName, List<Long> viewIds) {
         List<PlantImageRequestDTO> images = viewIds.stream().map(PlantImageRequestDTO::new).toList();
-        return new PlantCreateRequestDTO(commonName, scientificName, 4L, 2L, null, null, images);
+        return new PlantCreateRequestDTO(commonName, scientificName, 4L, 2L, null, null, null, images);
     }
 
     private static MultipartFile png(String filename) {
